@@ -12,7 +12,7 @@
                     <input
                         id="name"
                         type="text"
-                        v-model="userName"
+                        v-model="$store.state.userName"
                         placeholder="userName"
                     />
                 </td>
@@ -23,7 +23,7 @@
                     <input
                         id="email"
                         type="email"
-                        v-model="email"
+                        v-model="$store.state.email"
                         placeholder="Eーmail"
                     />
                 </td>
@@ -34,7 +34,7 @@
                     <input
                         id="password"
                         type="password"
-                        v-model="password"
+                        v-model="$store.state.password"
                         placeholder="Password"
                     />
                 </td>
@@ -55,22 +55,17 @@
 import firebase from 'firebase';
 
 export default {
-    data() {
-        return {
-            userName: '',
-            email: '',
-            password: '',
-        };
-    },
     methods: {
         signUp: function() {
             firebase
                 .auth()
-                .createUserWithEmailAndPassword(this.email, this.password)
+                .createUserWithEmailAndPassword(
+                    this.$store.state.email,
+                    this.$store.state.password
+                )
                 .then((response) => {
-                    console.log(response);
                     response.user.updateProfile({
-                        displayName: this.userName,
+                        displayName: this.$store.state.userName,
                     });
                 })
                 .catch((error) => {
