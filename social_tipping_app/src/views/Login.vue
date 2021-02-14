@@ -8,18 +8,18 @@
         <table class="form" align="center">
             <tr>
                 <td><label for="email">メールアドレス</label></td>
-                <td><input id="email" type="email" vmodel="email" /></td>
+                <td><input id="email" type="email" v-model="email" /></td>
             </tr>
             <tr>
                 <td><label for="password">パスワード</label></td>
                 <td>
-                    <input id="password" type="password" vmodel="password" />
+                    <input id="password" type="password" v-model="password" />
                 </td>
             </tr>
         </table>
 
         <div class="block">
-            <button class="login-btn">ログイン</button>
+            <button class="login-btn" @click="signIn">ログイン</button>
             <router-link class="signup-link" to="/"
                 >新規登録はこちらから</router-link
             >
@@ -27,6 +27,24 @@
         <p class="footer">Copyright ©︎ 2019 ⚪︎⚪︎ Inc. All rights reserved</p>
     </div>
 </template>
+<script>
+export default {
+    data() {
+        return {
+            email: '',
+            password: '',
+        };
+    },
+    methods: {
+        signIn() {
+            this.$store.dispatch('signIn', {
+                email: this.email,
+                password: this.password,
+            });
+        },
+    },
+};
+</script>
 <style scoped>
 h1 {
     font-size: 50px;

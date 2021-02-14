@@ -25,24 +25,36 @@ export default new Vuex.Store({
                     userInfo.email,
                     userInfo.password
                 )
-                .then((response) => {
-                    response.user.updateProfile({
+                .then((user) => {
+                    user.user.updateProfile({
                         displayName: userInfo.userName,
                     });
-                    dispatch('updateUserInfo', userInfo.userName);
                 })
-
+                .then(() => {
+                    dispatch('signIn', userInfo);
+                })
                 .catch((error) => {
                     alert(error.message);
                 });
         },
-        updateUserInfo({ commit }, name) {
+        signIn({ dispatch }, userInfo) {
+            firebase
+                .auth()
+                .signInWithEmailAndPassword(userInfo.email, userInfo.password)
+                .then(() => {
+                    dispatch('updateUserInfo');
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        },
+        updateUserInfo({ commit }) {
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
                     commit('getUserInfo', {
                         uid: user.uid,
                         email: user.email,
-                        name: name,
+                        name: user.displayName,
                     });
                 }
             });
