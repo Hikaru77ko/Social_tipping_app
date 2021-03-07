@@ -1,16 +1,21 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import firebase from 'firebase';
+import router from '../router/router.js';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
     state: {
         user: {
-            uid: '',
-            email: '',
-            name: '',
+            uid: null,
+            email: null,
+            name: null,
         },
+    },
+    getters: {
+        uid: (state) => state.user.uid,
+        displayName: (state) => state.user.name,
     },
     mutations: {
         getUserInfo(state, authData) {
@@ -43,6 +48,7 @@ export default new Vuex.Store({
                 .signInWithEmailAndPassword(userInfo.email, userInfo.password)
                 .then(() => {
                     dispatch('updateUserInfo');
+                    router.push('/dashboard');
                 })
                 .catch((error) => {
                     alert(error.message);
