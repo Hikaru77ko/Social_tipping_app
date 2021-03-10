@@ -3,7 +3,7 @@
         <img alt="Vue logo" src="../assets/logo.png" />
         <div class="top">
             <h3>{{ displayName }}さんようこそ！！</h3>
-            <h3>残高：{{ money }}</h3>
+            <h3>残高：{{ moneyStatus }}</h3>
         </div>
         <div class="main">
             <table>
@@ -28,30 +28,16 @@
     </div>
 </template>
 <script>
-import firebase from 'firebase';
-
 export default {
-    data() {
-        return {
-            money: '',
-        };
-    },
     created() {
-        const db = firebase.firestore();
-        const { currentUser } = firebase.auth();
-        if (currentUser) {
-            const ref = db.collection(`users/${currentUser.uid}/userInfo`);
-            ref.onSnapshot((snapshot) => {
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    this.money = data.money;
-                });
-            });
-        }
+        this.$store.dispatch('getMoneyStatus');
     },
     computed: {
         displayName() {
             return this.$store.getters.displayName;
+        },
+        moneyStatus() {
+            return this.$store.getters.moneyStatus;
         },
     },
 };

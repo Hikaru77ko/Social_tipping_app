@@ -12,14 +12,19 @@ export default new Vuex.Store({
             email: null,
             name: null,
         },
+        money: null,
     },
     getters: {
         uid: (state) => state.user.uid,
         displayName: (state) => state.user.name,
+        moneyStatus: (state) => state.money,
     },
     mutations: {
         getUserInfo(state, authData) {
             state.user = authData;
+        },
+        updateMoneyStatus(state, storeData) {
+            state.money = storeData;
         },
     },
     actions: {
@@ -64,6 +69,19 @@ export default new Vuex.Store({
                     });
                 }
             });
+        },
+        getMoneyStatus({ commit }) {
+            const db = firebase.firestore();
+            const { currentUser } = firebase.auth();
+            if (currentUser) {
+                const ref = db.collection(`users/${currentUser.uid}/userInfo`);
+                ref.onSnapshot((snapshot) => {
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        commit('updateMoneyStatus', data.money);
+                    });
+                });
+            }
         },
     },
 });
