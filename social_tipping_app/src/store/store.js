@@ -83,5 +83,18 @@ export default new Vuex.Store({
                 });
             }
         },
+        logout({ commit }) {
+            firebase
+                .auth()
+                .signOut()
+                .then(() => {
+                    commit('getUserInfo', null);
+                    commit('updateMoneyStatu', null);
+                    router.push('/login');
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        },
     },
 });
