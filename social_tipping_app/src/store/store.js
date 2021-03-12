@@ -1,20 +1,30 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import firebase from 'firebase';
+import router from '../router/router.js';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
     state: {
         user: {
-            uid: '',
-            email: '',
-            name: '',
+            uid: null,
+            email: null,
+            name: null,
         },
+        money: null,
+    },
+    getters: {
+        uid: (state) => state.user.uid,
+        displayName: (state) => state.user.name,
+        moneyStatus: (state) => state.money,
     },
     mutations: {
         getUserInfo(state, authData) {
             state.user = authData;
+        },
+        updateMoneyStatus(state, storeData) {
+            state.money = storeData;
         },
     },
     actions: {
@@ -43,6 +53,7 @@ export default new Vuex.Store({
                 .signInWithEmailAndPassword(userInfo.email, userInfo.password)
                 .then(() => {
                     dispatch('updateUserInfo');
+                    router.push('/dashboard');
                 })
                 .catch((error) => {
                     alert(error.message);
@@ -58,6 +69,19 @@ export default new Vuex.Store({
                     });
                 }
             });
+        },
+        getMoneyStatus({ commit }) {
+            const db = firebase.firestore();
+            const { currentUser } = firebase.auth();
+            if (currentUser) {
+                const ref = db.collection(`users/${currentUser.uid}/userInfo`);
+                ref.onSnapshot((snapshot) => {
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        commit('updateMoneyStatus', data.money);
+                    });
+                });
+            }
         },
     },
 });
