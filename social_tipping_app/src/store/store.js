@@ -53,14 +53,13 @@ export default new Vuex.Store({
                 .signInWithEmailAndPassword(userInfo.email, userInfo.password)
                 .then(() => {
                     dispatch('updateUserInfo');
-                    router.push('/dashboard');
                 })
                 .catch((error) => {
                     alert(error.message);
                 });
         },
-        updateUserInfo({ commit }) {
-            firebase.auth().onAuthStateChanged((user) => {
+        async updateUserInfo({ commit }) {
+            await firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
                     commit('getUserInfo', {
                         uid: user.uid,
@@ -69,6 +68,7 @@ export default new Vuex.Store({
                     });
                 }
             });
+            router.push('/dashboard');
         },
         getMoneyStatus({ commit }) {
             const db = firebase.firestore();
