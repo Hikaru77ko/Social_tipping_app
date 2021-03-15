@@ -3,7 +3,10 @@
         <img alt="Vue logo" src="../assets/logo.png" />
         <div class="top">
             <h3>{{ displayName }}さんようこそ！！</h3>
-            <h3>残高：{{ moneyStatus }}</h3>
+            <div>
+                <h3 class="top-right">残高：{{ moneyStatus }}</h3>
+                <button class="logout-btn" @click="logout">ログアウト</button>
+            </div>
         </div>
         <div class="main">
             <table>
@@ -32,6 +35,11 @@ export default {
     created() {
         this.$store.dispatch('getMoneyStatus');
     },
+    methods: {
+        logout() {
+            this.$store.dispatch('logout');
+        },
+    },
     computed: {
         displayName() {
             return this.$store.getters.displayName;
@@ -44,7 +52,7 @@ export default {
 </script>
 <style scoped>
 .container {
-    width: 1000px;
+    width: 1100px;
     margin: auto;
     padding-top: 50px;
 }
@@ -79,5 +87,25 @@ caption {
 
 .col-1 {
     width: 15%;
+}
+
+.logout-btn {
+    color: rgb(55, 159, 219);
+    font-size: 10px;
+    border: solid 1px rgb(55, 159, 219);
+    padding: 3px 7px;
+    background-color: white;
+    border-radius: 5px;
+    transition: all 0.5s;
+}
+
+.logout-btn:hover {
+    color: white;
+    background-color: rgb(55, 159, 219);
+}
+
+.top-right {
+    display: inline;
+    margin-right: 20px;
 }
 </style>
