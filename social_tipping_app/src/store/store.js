@@ -13,35 +13,67 @@ export default new Vuex.Store({
             name: null,
         },
         money: null,
+        otherUserData: null,
+        clickUserStatus: {
+            name: null,
+            money: null,
+        },
+        isWalletModalShow: false,
     },
     getters: {
         uid: (state) => state.user.uid,
         displayName: (state) => state.user.name,
         moneyStatus: (state) => state.money,
+        otherUserData: (state) => state.otherUserData,
+        clickUserName: (state) => state.clickUserStatus.name,
+        clickUserMoney: (state) => state.clickUserStatus.money,
+        isWalletModalShow: (state) => state.isWalletModalShow,
     },
     mutations: {
-        getUserInfo(state, authData) {
+        setUserInfo(state, authData) {
             state.user = authData;
         },
-        updateMoneyStatus(state, storeData) {
+        setMoneyStatus(state, storeData) {
             state.money = storeData;
+        },
+        setOtherUserData(state, userData) {
+            state.otherUserData = userData;
+        },
+        setClickUserStatus(state, userData) {
+            state.clickUserStatus = userData;
+        },
+        setIsWalletModalShow(state, boolean) {
+            state.isWalletModalShow = boolean;
         },
     },
     actions: {
-        signUp({ dispatch }, userInfo) {
-            firebase
+        async signUp({ commit }, userInfo) {
+            const authMyData = await firebase
                 .auth()
                 .createUserWithEmailAndPassword(
                     userInfo.email,
                     userInfo.password
-                )
-                .then((user) => {
-                    user.user.updateProfile({
-                        displayName: userInfo.userName,
-                    });
-                })
+                );
+
+            await authMyData.user.updateProfile({
+                displayName: userInfo.userName,
+            });
+
+            await commit('setUserInfo', {
+                uid: authMyData.user.uid,
+                email: authMyData.user.email,
+                name: authMyData.user.displayName,
+            });
+
+            const db = firebase.firestore();
+            const ref = db.collection('users').doc(authMyData.user.uid);
+            ref.set({
+                id: authMyData.user.uid,
+                displayName: authMyData.user.displayName,
+                money: 1000,
+            })
                 .then(() => {
-                    dispatch('signIn', userInfo);
+                    router.push('/dashboard');
                 })
                 .catch((error) => {
                     alert(error.message);
@@ -61,7 +93,7 @@ export default new Vuex.Store({
         async updateUserInfo({ commit }) {
             await firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
-                    commit('getUserInfo', {
+                    commit('setUserInfo', {
                         uid: user.uid,
                         email: user.email,
                         name: user.displayName,
@@ -70,16 +102,14 @@ export default new Vuex.Store({
             });
             router.push('/dashboard');
         },
-        getMoneyStatus({ commit }) {
+        fetchMoneyStatus({ commit }) {
             const db = firebase.firestore();
             const { currentUser } = firebase.auth();
             if (currentUser) {
-                const ref = db.collection(`users/${currentUser.uid}/userInfo`);
-                ref.onSnapshot((snapshot) => {
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        commit('updateMoneyStatus', data.money);
-                    });
+                const ref = db.collection('users').doc(currentUser.uid);
+                ref.onSnapshot((doc) => {
+                    let data = doc.data();
+                    commit('setMoneyStatus', data.money);
                 });
             }
         },
@@ -88,13 +118,32 @@ export default new Vuex.Store({
                 .auth()
                 .signOut()
                 .then(() => {
-                    commit('getUserInfo', null);
-                    commit('updateMoneyStatu', null);
+                    commit('setUserInfo', null);
+                    commit('setMoneyStatus', null);
                     router.push('/login');
                 })
                 .catch((error) => {
                     alert(error.message);
                 });
+        },
+        async fetchOtherUserData({ commit, getters }) {
+            const db = await firebase.firestore();
+            db.collection('users')
+                .where('displayName', '!=', getters.displayName)
+                .onSnapshot((querySnapshot) => {
+                    let otherUserData = [];
+                    querySnapshot.forEach((doc) => {
+                        otherUserData.push({
+                            displayName: doc.data().displayName,
+                            money: doc.data().money,
+                        });
+                        commit('setOtherUserData', otherUserData);
+                    });
+                });
+        },
+        clickUserStatus({ commit }, userData) {
+            commit('setClickUserStatus', userData);
+            commit('setIsWalletModalShow', true);
         },
     },
 });
