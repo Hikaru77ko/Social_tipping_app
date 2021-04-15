@@ -2,7 +2,7 @@
     <div>
         <div>
             <img alt="Vue logo" src="../assets/logo.png" />
-            <h1>ログイン画面</h1>
+            <h2>ログイン画面</h2>
         </div>
 
         <table class="form" align="center">
@@ -46,7 +46,7 @@ export default {
 };
 </script>
 <style scoped>
-h1 {
+h2 {
     font-size: 50px;
     font-weight: 200;
 }

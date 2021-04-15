@@ -8,38 +8,65 @@
                 <button class="logout-btn" @click="logout">ログアウト</button>
             </div>
         </div>
+
         <div class="main">
-            <table>
-                <caption>
-                    ユーザ一覧
-                </caption>
-                <colgroup span="1" class="col-1"></colgroup>
-                <colgroup span="1" class="col-2"></colgroup>
-                <tr>
-                    <th>ユーザ名</th>
-                    <th></th>
-                </tr>
-                <tr>
-                    <td align="center">テスト</td>
-                    <td align="right">
-                        <button class="btn">walletを見る</button
+            <h2>
+                ユーザ一覧
+            </h2>
+            <h3>
+                ユーザー名
+            </h3>
+            <ul>
+                <li class="user-list" v-for="user in otherUsers" :key="user.id">
+                    <p class="display-name">{{ user.displayName }}</p>
+                    <div>
+                        <button class="btn" @click="clickUserStatus(user)">
+                            walletを見る</button
                         ><button class="btn">送る</button>
-                    </td>
-                </tr>
-            </table>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="modal" v-show="isWalletModalShow">
+            <div class="modal-overlay" @click="isWalletModalClose()"></div>
+            <div class="modal-inner">
+                <div class="modal-inner-top">
+                    <p>{{ clickUserName }}さんの残高</p>
+                    <p>{{ clickUserMoney }}</p>
+                </div>
+                <div class="modal-inner-bottom">
+                    <button
+                        class="modal-inner-bottom-btn"
+                        @click="isWalletModalClose()"
+                    >
+                        close
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 <script>
 export default {
     created() {
-        this.$store.dispatch('getMoneyStatus');
+        this.$store.dispatch('fetchMoneyStatus');
+        this.$store.dispatch('fetchOtherUserData');
     },
     methods: {
         logout() {
             this.$store.dispatch('logout');
         },
+        clickUserStatus(userData) {
+            this.$store.dispatch('clickUserStatus', {
+                name: userData.displayName,
+                money: userData.money,
+            });
+        },
+        isWalletModalClose() {
+            this.$store.commit('setIsWalletModalShow', false);
+        },
     },
+
     computed: {
         displayName() {
             return this.$store.getters.displayName;
@@ -47,10 +74,23 @@ export default {
         moneyStatus() {
             return this.$store.getters.moneyStatus;
         },
+        otherUsers() {
+            return this.$store.getters.otherUserData;
+        },
+        clickUserName() {
+            return this.$store.getters.clickUserName;
+        },
+        clickUserMoney() {
+            return this.$store.getters.clickUserMoney;
+        },
+        isWalletModalShow() {
+            return this.$store.getters.isWalletModalShow;
+        },
     },
 };
 </script>
 <style scoped>
+
 .container {
     width: 1100px;
     margin: auto;
@@ -60,18 +100,35 @@ export default {
 .top {
     display: flex;
     justify-content: space-between;
+    margin-top: 50px;
+}
+
+.top h3:first-of-type {
+    margin-top: 0px;
+}
+
+.user-list {
+    display: flex;
+    justify-content: space-between;
+}
+
+.display-name{
+    margin-top: 0;
 }
 
 .main {
     width: 600px;
     margin: auto;
 }
-table {
-    width: 100%;
+
+.main h3:first-of-type {
+    width:150px;
+    margin-right: auto;
 }
 
-caption {
-    font-size: 80px;
+h2 {
+    font-size: 50px;
+    font-weight: 200;
     margin-top: 32px;
 }
 
@@ -83,10 +140,6 @@ caption {
     border-radius: 5px;
     border-color: white;
     border-style: none;
-}
-
-.col-1 {
-    width: 15%;
 }
 
 .logout-btn {
@@ -107,5 +160,60 @@ caption {
 .top-right {
     display: inline;
     margin-right: 20px;
+}
+
+.top-top {
+    vertical-align: center;
+}
+
+.modal {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 120%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+.modal-inner {
+    z-index: 2;
+}
+
+.modal-inner-top {
+    width: 250px;
+    height: 120px;
+    background-color: white;
+    z-index: 3;
+}
+
+.modal-inner-top p:first-of-type {
+    margin-bottom: 60px;
+}
+
+.modal-inner-bottom {
+    width: 250px;
+    height: 60px;
+    background-color: rgb(189, 184, 184);
+    z-index: 3;
+    position: relative;
+}
+
+.modal-inner-bottom-btn {
+    display: inline-block;
+    color: honeydew;
+    font-size: 18px;
+    background-color: rgb(243, 84, 84);
+    position: absolute;
+    top: 25%;
+    right: 10%;
+    padding: 3px 10px;
+    border: none;
 }
 </style>
