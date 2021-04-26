@@ -189,37 +189,42 @@ export default new Vuex.Store({
 
         async fetchUpDateMoney({ commit, getters }, remittanceAmount) {
             try {
-                const db = await firebase.firestore();
-                const { currentUser } = await firebase.auth();
-                if (getters.moneyStatus > remittanceAmount) {
-                    const loginUserRef = await db
-                        .collection('users')
-                        .doc(currentUser.uid);
-                    await loginUserRef.update({
-                        money:
-                            parseInt(getters.moneyStatus) -
-                            parseInt(remittanceAmount),
-                    });
-                } else {
-                    return alert('金額が足りません');
-                }
+                const db = firebase.firestore();
+                let { currentUser } = firebase.auth();
+                let loginUserRef = await db
+                    .collection('users')
+                    .doc(currentUser.uid);
 
-                const remittancePartnerRef = await db
+                let remittancePartnerRef = await db
                     .collection('users')
-                    .doc(getters.clickRemittancePartnerAuthUid)
-                    .get();
-                const remittancePartnerMoney = await remittancePartnerRef.data()
-                    .money;
-                await db
-                    .collection('users')
-                    .doc(getters.clickRemittancePartnerAuthUid)
-                    .update({
-                        money:
-                            parseInt(remittancePartnerMoney) +
-                            parseInt(remittanceAmount),
-                    });
-                commit('setClickRemittancePartnerAuthUid', null);
-                commit('setIsRemittanceModalShow', false);
+                    .doc(getters.clickRemittancePartnerAuthUid);
+
+                return db.runTransaction(async (transaction) => {
+                    let loginUser = await transaction.get(loginUserRef);
+                    let remittancePartner = await transaction.get(
+                        remittancePartnerRef
+                    );
+                    if (loginUser.exists && remittancePartner.exists) {
+                        if (loginUser.data().money > remittanceAmount) {
+                            let newLoginUserMoney =
+                                (await parseInt(loginUser.data().money)) -
+                                parseInt(remittanceAmount);
+                            transaction.update(loginUserRef, {
+                                money: newLoginUserMoney,
+                            });
+                        } else {
+                            return alert('お金が足りません');
+                        }
+                        let newRemittancePartneMoney =
+                            (await parseInt(remittancePartner.data().money)) +
+                            parseInt(remittanceAmount);
+                        transaction.update(remittancePartnerRef, {
+                            money: newRemittancePartneMoney,
+                        });
+                    }
+                    commit('setClickRemittancePartnerAuthUid', null);
+                    commit('setIsRemittanceModalShow', false);
+                });
             } catch (error) {
                 alert(error.message);
             }
