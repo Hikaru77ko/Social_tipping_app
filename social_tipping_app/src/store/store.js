@@ -19,6 +19,8 @@ export default new Vuex.Store({
             money: null,
         },
         isWalletModalShow: false,
+        clickRemittancePartnerAuthUid: null,
+        isRemittanceModalShow: false,
     },
     getters: {
         uid: (state) => state.user.uid,
@@ -28,6 +30,9 @@ export default new Vuex.Store({
         clickUserName: (state) => state.clickUserStatus.name,
         clickUserMoney: (state) => state.clickUserStatus.money,
         isWalletModalShow: (state) => state.isWalletModalShow,
+        clickRemittancePartnerAuthUid: (state) =>
+            state.clickRemittancePartnerAuthUid,
+        isRemittanceModalShow: (state) => state.isRemittanceModalShow,
     },
     mutations: {
         setUserInfo(state, authData) {
@@ -44,6 +49,12 @@ export default new Vuex.Store({
         },
         setIsWalletModalShow(state, boolean) {
             state.isWalletModalShow = boolean;
+        },
+        setClickRemittancePartnerAuthUid(state, authUid) {
+            state.clickRemittancePartnerAuthUid = authUid;
+        },
+        setIsRemittanceModalShow(state, boolean) {
+            state.isRemittanceModalShow = boolean;
         },
     },
     actions: {
@@ -156,6 +167,7 @@ export default new Vuex.Store({
                             otherUserData.push({
                                 displayName: doc.data().displayName,
                                 money: doc.data().money,
+                                uid: doc.data().id,
                             });
                             commit('setOtherUserData', otherUserData);
                         });
@@ -168,6 +180,54 @@ export default new Vuex.Store({
         clickUserStatus({ commit }, userData) {
             commit('setClickUserStatus', userData);
             commit('setIsWalletModalShow', true);
+        },
+
+        clickRemittancePartnerAuthUid({ commit }, authUid) {
+            commit('setClickRemittancePartnerAuthUid', authUid);
+            commit('setIsRemittanceModalShow', true);
+        },
+
+        async fetchUpDateMoney({ commit, getters }, remittanceAmount) {
+            try {
+                const db = firebase.firestore();
+                let { currentUser } = firebase.auth();
+                let loginUserRef = await db
+                    .collection('users')
+                    .doc(currentUser.uid);
+
+                let remittancePartnerRef = await db
+                    .collection('users')
+                    .doc(getters.clickRemittancePartnerAuthUid);
+
+                return db.runTransaction(async (transaction) => {
+                    let loginUser = await transaction.get(loginUserRef);
+                    let remittancePartner = await transaction.get(
+                        remittancePartnerRef
+                    );
+                    if (loginUser.exists && remittancePartner.exists) {
+                        if (loginUser.data().money > remittanceAmount) {
+                            let newLoginUserMoney =
+                                (await parseInt(loginUser.data().money)) -
+                                parseInt(remittanceAmount);
+                            transaction.update(loginUserRef, {
+                                money: newLoginUserMoney,
+                            });
+                        } else {
+                            return alert('お金が足りません');
+                        }
+                        let newRemittancePartneMoney =
+                            (await parseInt(remittancePartner.data().money)) +
+                            parseInt(remittanceAmount);
+                        transaction.update(remittancePartnerRef, {
+                            money: newRemittancePartneMoney,
+                        });
+                    }
+                    commit('setClickRemittancePartnerAuthUid', null);
+                    commit('setIsRemittanceModalShow', false);
+                });
+            } catch (error) {
+                alert(error.message);
+            }
         },
     },
 });
